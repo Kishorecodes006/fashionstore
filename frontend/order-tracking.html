@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order Tracking - SwiftCart</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f7faf8; font-family:Arial,Helvetica,sans-serif; color:#16211f; }
+    .navbar { background:white; box-shadow:0 8px 25px rgba(0,0,0,0.06); }
+    .navbar-brand { font-weight:900; }
+    .tracking-box { background:white; border-radius:14px; padding:30px; box-shadow:0 14px 40px rgba(0,0,0,0.08); }
+    .search-box { background:white; border-radius:14px; padding:24px; box-shadow:0 14px 40px rgba(0,0,0,0.08); margin-bottom:25px; }
+    .step { display:flex; gap:18px; position:relative; padding-bottom:30px; }
+    .step:not(:last-child)::before { content:""; position:absolute; left:20px; top:42px; width:3px; height:calc(100% - 40px); background:#dbe4e1; }
+    .step-icon { width:42px; height:42px; border-radius:50%; background:#198754; color:white; display:flex; align-items:center; justify-content:center; z-index:2; flex-shrink:0; }
+    .step.pending .step-icon { background:#f59e0b; }
+    .step.waiting .step-icon { background:#d1d5db; color:#374151; }
+    .step h5 { font-weight:900; margin-bottom:5px; }
+    .step p { color:#65726f; margin-bottom:0; }
+    .order-card { background:#f8fafc; border:1px solid #dbe4e1; border-radius:10px; padding:18px; margin-bottom:22px; }
+    .badge-status { padding:6px 12px; border-radius:999px; font-size:12px; font-weight:800; }
+    .PENDING   { background:#fef3c7; color:#92400e; }
+    .SHIPPED   { background:#dbeafe; color:#1d4ed8; }
+    .DELIVERED { background:#dcfce7; color:#166534; }
+    .CANCELLED { background:#fee2e2; color:#b91c1c; }
+    footer { margin-top:50px; background:#16211f; color:white; padding:25px 0; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="index.html"><i class="bi bi-bag-check-fill me-2"></i>SwiftCart</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+        <li class="nav-item"><a class="nav-link" href="cart.html"><i class="bi bi-cart3"></i> Cart <span class="badge bg-dark ms-1" id="cart-count">0</span></a></li>
+        <li class="nav-item"><a class="nav-link active" href="order-tracking.html">Track Order</a></li>
+        <li class="nav-item" id="navAuthItem"><a class="nav-link" href="login.html">Login</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-5">
+  <div class="mb-4">
+    <h1 class="fw-bold">Order Tracking</h1>
+    <p class="text-secondary">Track your order status using your Order ID.</p>
+  </div>
+
+  <div class="search-box">
+    <div class="row g-3">
+      <div class="col-md-9">
+        <input type="number" id="orderIdInput" class="form-control" placeholder="Enter Order ID (e.g. 1)">
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-dark w-100" onclick="trackOrder()">
+          <i class="bi bi-search me-2"></i>Track
+        </button>
+      </div>
+    </div>
+    <div id="trackMessage" class="mt-3 small"></div>
+  </div>
+
+  <div id="trackingResult" class="d-none">
+    <div class="tracking-box">
+      <div class="order-card" id="orderInfo"></div>
+      <div id="orderSteps"></div>
+    </div>
+
+    <!-- My Orders -->
+    <div class="mt-4">
+      <h5 class="fw-bold mb-3">My Orders</h5>
+      <div id="myOrders"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="container text-center"><p class="mb-0">2026 SwiftCart.</p></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const API_URL = 'http://localhost:8080/api';
+
+  function getCart() { return JSON.parse(localStorage.getItem('fs_cart') || '[]'); }
+  function getUser() { return JSON.parse(localStorage.getItem('fs_user') || 'null'); }
+
+  function updateCartBadge() {
+    const total = getCart().reduce((s,i) => s + i.qty, 0);
+    document.querySelectorAll('#cart-count').forEach(el => el.textContent = total);
+  }
+
+  function updateNav() {
+    const user = getUser();
+    const navItem = document.getElementById('navAuthItem');
+    if (user) {
+      navItem.innerHTML = `<div class="nav-link d-flex align-items-center gap-2"><span style="font-weight:800;">${user.name}</span><button class="btn btn-sm btn-outline-dark" onclick="logout()">Logout</button></div>`;
+    }
+  }
+  function logout() { localStorage.removeItem('fs_user'); window.location.href = 'login.html'; }
+
+  const STATUS_STEPS = ['PENDING','CONFIRMED','PACKED','SHIPPED','DELIVERED'];
+
+  function renderSteps(currentStatus) {
+    const icons = ['bi-cart-check','bi-check-circle','bi-box-seam','bi-truck','bi-house-check'];
+    const labels = ['Order Placed','Order Confirmed','Packed','Shipped','Delivered'];
+    const descs  = [
+      'Your order has been received.',
+      'Seller confirmed your order.',
+      'Your product has been packed.',
+      'Your order is on the way.',
+      'Order delivered successfully!'
+    ];
+    const currentIdx = STATUS_STEPS.indexOf(currentStatus);
+
+    return labels.map((label, i) => {
+      let cls = 'step waiting';
+      if (i < currentIdx) cls = 'step';
+      else if (i === currentIdx) cls = 'step pending';
+      const iconStyle = i < currentIdx ? 'background:#198754' : i === currentIdx ? 'background:#f59e0b' : 'background:#d1d5db;color:#374151';
+      return `
+        <div class="${cls}">
+          <div class="step-icon" style="${iconStyle}"><i class="bi ${icons[i]}"></i></div>
+          <div><h5>${label}</h5><p>${descs[i]}</p></div>
+        </div>`;
+    }).join('');
+  }
+
+  async function trackOrder() {
+    const id = document.getElementById('orderIdInput').value.trim();
+    const msgDiv = document.getElementById('trackMessage');
+
+    if (!id) {
+      msgDiv.className = 'mt-3 small text-danger';
+      msgDiv.textContent = 'Please enter an Order ID.';
+      return;
+    }
+
+    msgDiv.className = 'mt-3 small text-secondary';
+    msgDiv.textContent = 'Searching...';
+
+    try {
+      const res  = await fetch(`${API_URL}/orders/${id}`);
+      if (!res.ok) throw new Error('Not found');
+      const order = await res.json();
+
+      msgDiv.className = 'mt-3 small text-success fw-bold';
+      msgDiv.textContent = 'Order found!';
+
+      document.getElementById('orderInfo').innerHTML = `
+        <div class="row">
+          <div class="col-md-3"><b>Order ID</b><p class="mb-0 text-secondary">#${order.id}</p></div>
+          <div class="col-md-3"><b>Customer</b><p class="mb-0 text-secondary">${order.user?.name || 'N/A'}</p></div>
+          <div class="col-md-2"><b>Total</b><p class="mb-0 text-secondary">&#8377;${order.totalAmount}</p></div>
+          <div class="col-md-2"><b>Payment</b><p class="mb-0 text-secondary">${order.paymentMode || 'COD'}</p></div>
+          <div class="col-md-2"><b>Status</b><p class="mb-0"><span class="badge-status ${order.status}">${order.status}</span></p></div>
+        </div>`;
+
+      document.getElementById('orderSteps').innerHTML = renderSteps(order.status || 'PENDING');
+      document.getElementById('trackingResult').classList.remove('d-none');
+      loadMyOrders();
+
+    } catch(e) {
+      msgDiv.className = 'mt-3 small text-danger';
+      msgDiv.textContent = 'Order not found. Please check the Order ID.';
+      document.getElementById('trackingResult').classList.add('d-none');
+    }
+  }
+
+  async function loadMyOrders() {
+    const user = getUser();
+    if (!user) return;
+    try {
+      const res    = await fetch(`${API_URL}/orders/user/${user.id}`);
+      const orders = await res.json();
+      const div    = document.getElementById('myOrders');
+      if (!orders.length) { div.innerHTML = '<p class="text-secondary">No orders yet.</p>'; return; }
+      div.innerHTML = `
+        <div class="table-responsive">
+          <table class="table align-middle bg-white rounded shadow-sm">
+            <thead><tr><th>Order ID</th><th>Total</th><th>Payment</th><th>Status</th><th>Track</th></tr></thead>
+            <tbody>
+              ${orders.map(o => `
+                <tr>
+                  <td>#${o.id}</td>
+                  <td>&#8377;${o.totalAmount}</td>
+                  <td>${o.paymentMode || 'COD'}</td>
+                  <td><span class="badge-status ${o.status}">${o.status}</span></td>
+                  <td><button class="btn btn-sm btn-outline-dark" onclick="document.getElementById('orderIdInput').value=${o.id};trackOrder()">Track</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    } catch(e) { console.error(e); }
+  }
+
+  // Auto-track from URL or last order
+  function init() {
+    updateCartBadge();
+    updateNav();
+
+    const params  = new URLSearchParams(window.location.search);
+    const orderId = params.get('orderId') || localStorage.getItem('last_order_id');
+    if (orderId) {
+      document.getElementById('orderIdInput').value = orderId;
+      trackOrder();
+    }
+
+    // Also load my orders list
+    loadMyOrders();
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cart - SwiftCart</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: #f7faf8; font-family: Arial, Helvetica, sans-serif; color: #16211f; }
+    .navbar { background: white; box-shadow: 0 8px 25px rgba(0,0,0,0.06); }
+    .navbar-brand { font-weight: 900; }
+    .cart-box { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 14px 40px rgba(0,0,0,0.08); }
+    .product-img { width:70px; height:70px; border-radius:10px; background:linear-gradient(145deg,#b8eadc,#f7c948); display:flex; align-items:center; justify-content:center; font-size:28px; overflow:hidden; flex-shrink:0; }
+    .product-img img { width:100%; height:100%; object-fit:cover; border-radius:10px; }
+    .summary { background:white; border-radius:12px; padding:25px; box-shadow:0 14px 40px rgba(0,0,0,0.08); position:sticky; top:80px; }
+    .summary-row { display:flex; justify-content:space-between; margin-bottom:12px; color:#65726f; }
+    .summary-total { display:flex; justify-content:space-between; border-top:1px solid #dbe4e1; padding-top:15px; font-weight:900; font-size:20px; }
+    .empty-cart { text-align:center; padding:60px 20px; color:#65726f; }
+    .empty-cart i { font-size:64px; margin-bottom:16px; color:#b8eadc; }
+    footer { margin-top:50px; background:#16211f; color:white; padding:25px 0; }
+    #toast-wrap { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px; }
+    .toast-msg { background:#16211f; color:white; padding:12px 20px; border-radius:8px; font-weight:700; font-size:14px; box-shadow:0 8px 25px rgba(0,0,0,0.2); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="index.html"><i class="bi bi-bag-check-fill me-2"></i>SwiftCart</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+        <li class="nav-item"><a class="nav-link active" href="cart.html"><i class="bi bi-cart3"></i> Cart <span class="badge bg-dark ms-1" id="cart-count">0</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="order-tracking.html">Track Order</a></li>
+        <li class="nav-item" id="navAuthItem"><a class="nav-link" href="login.html">Login</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-5">
+  <div class="mb-4">
+    <h1 class="fw-bold">Shopping Cart</h1>
+    <p class="text-secondary">Review your selected products before checkout.</p>
+  </div>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="cart-box">
+        <div id="cartContent"></div>
+        <a href="products.html" class="btn btn-outline-dark mt-3"><i class="bi bi-arrow-left me-2"></i>Continue Shopping</a>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="summary">
+        <h4 class="fw-bold mb-4">Order Summary</h4>
+        <div class="summary-row"><span>Subtotal</span><span id="subtotal">0</span></div>
+        <div class="summary-row"><span>Delivery</span><span id="delivery">0</span></div>
+        <div class="summary-total"><span>Total</span><span id="grandTotal">0</span></div>
+        <button class="btn btn-dark w-100 mt-4" id="checkoutBtn" data-bs-toggle="modal" data-bs-target="#checkoutModal" disabled>
+          <i class="bi bi-bag-check me-2"></i>Place Order
+        </button>
+        <div id="loginWarning" class="alert alert-warning mt-3 small d-none">
+          Please <a href="login.html" class="fw-bold">login</a> to place an order.
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Checkout Modal -->
+<div class="modal fade" id="checkoutModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold"><i class="bi bi-bag-check me-2"></i>Confirm Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Delivery Address</label>
+          <textarea id="deliveryAddress" class="form-control" rows="3" placeholder="Enter delivery address" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Payment Mode</label>
+          <select id="paymentMode" class="form-select">
+            <option value="COD">Cash on Delivery (COD)</option>
+            <option value="UPI">UPI</option>
+            <option value="CARD">Credit / Debit Card</option>
+            <option value="NETBANKING">Net Banking</option>
+          </select>
+        </div>
+        <div class="alert alert-light border d-flex justify-content-between">
+          <span class="fw-bold">Total Amount:</span>
+          <strong id="modalTotal">0</strong>
+        </div>
+        <div id="orderMessage" class="d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-dark px-4" id="confirmOrderBtn" onclick="placeOrder()">
+          <span id="orderBtnText"><i class="bi bi-bag-check me-2"></i>Confirm Order</span>
+          <span id="orderSpinner" class="spinner-border spinner-border-sm d-none"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="container text-center"><p class="mb-0">2026 SwiftCart. Simple E-Commerce Project.</p></div>
+</footer>
+<div id="toast-wrap"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const API_URL = 'http://localhost:8080/api';
+
+  function getCart() { return JSON.parse(localStorage.getItem('fs_cart') || '[]'); }
+  function saveCart(cart) { localStorage.setItem('fs_cart', JSON.stringify(cart)); updateCartBadge(); renderCart(); }
+  function updateCartBadge() {
+    const total = getCart().reduce((s,i) => s + i.qty, 0);
+    document.querySelectorAll('#cart-count').forEach(el => el.textContent = total);
+  }
+  function getUser() { return JSON.parse(localStorage.getItem('fs_user') || 'null'); }
+
+  function showToast(msg) {
+    const wrap = document.getElementById('toast-wrap');
+    const t = document.createElement('div');
+    t.className = 'toast-msg'; t.textContent = msg;
+    wrap.appendChild(t); setTimeout(() => t.remove(), 3500);
+  }
+
+  function updateNav() {
+    const user = getUser();
+    const navItem = document.getElementById('navAuthItem');
+    if (user) {
+      navItem.innerHTML = `
+        <div class="nav-link d-flex align-items-center gap-2">
+          <a href="profile.html" style="font-weight:800; color:#16211f; text-decoration:none;">
+            <i class="bi bi-person-circle me-1"></i>${user.name}
+          </a>
+          <button class="btn btn-sm btn-outline-dark" onclick="logout()">Logout</button>
+        </div>`;
+    }
+  }
+  function logout() { localStorage.removeItem('fs_user'); window.location.href = 'login.html'; }
+
+  function renderCart() {
+    const cart = getCart();
+    const content = document.getElementById('cartContent');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const user = getUser();
+
+    if (cart.length === 0) {
+      content.innerHTML = `<div class="empty-cart"><i class="bi bi-cart-x"></i><h4 class="fw-bold">Your cart is empty!</h4><p>Add some products to get started.</p><a href="products.html" class="btn btn-dark mt-2"><i class="bi bi-bag me-2"></i>Shop Now</a></div>`;
+      updateSummary(0); checkoutBtn.disabled = true; return;
+    }
+
+    content.innerHTML = `
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th>Product</th><th>Price</th><th>Qty</th><th>Total</th><th>Remove</th></tr></thead>
+          <tbody>
+            ${cart.map((item, i) => {
+              const imgHtml = item.img
+                ? `<img src="${item.img}" alt="${item.name}" onerror="this.parentElement.innerHTML='<i class=\\'bi bi-box-seam\\'></i>'">`
+                : `<i class="bi bi-box-seam"></i>`;
+              return `<tr>
+                <td><div class="d-flex align-items-center gap-3"><div class="product-img">${imgHtml}</div><div><b>${item.name}</b><p class="small text-secondary mb-0">${item.cat||'General'}</p></div></div></td>
+                <td>&#8377;${item.price}</td>
+                <td><div class="d-flex align-items-center gap-2"><button class="btn btn-sm btn-outline-secondary" onclick="changeQty(${i},-1)">&#8722;</button><span class="fw-bold px-1">${item.qty}</span><button class="btn btn-sm btn-outline-secondary" onclick="changeQty(${i},1)">&#43;</button></div></td>
+                <td><b>&#8377;${item.price * item.qty}</b></td>
+                <td><button class="btn btn-outline-danger btn-sm" onclick="removeItem(${i})"><i class="bi bi-trash"></i></button></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+
+    const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+    updateSummary(subtotal);
+
+    if (!user) {
+      checkoutBtn.disabled = true;
+      document.getElementById('loginWarning').classList.remove('d-none');
+    } else {
+      checkoutBtn.disabled = false;
+      document.getElementById('loginWarning').classList.add('d-none');
+      document.getElementById('deliveryAddress').value = user.address || '';
+    }
+  }
+
+  function updateSummary(subtotal) {
+    const delivery = subtotal > 0 ? 50 : 0;
+    const grand = subtotal + delivery;
+    document.getElementById('subtotal').textContent   = '&#8377;' + subtotal;
+    document.getElementById('delivery').textContent   = '&#8377;' + delivery;
+    document.getElementById('grandTotal').textContent = '&#8377;' + grand;
+    document.getElementById('modalTotal').textContent = '&#8377;' + grand;
+  }
+
+  function changeQty(index, delta) {
+    const cart = getCart();
+    cart[index].qty += delta;
+    if (cart[index].qty <= 0) cart.splice(index, 1);
+    saveCart(cart);
+  }
+
+  function removeItem(index) {
+    const cart = getCart();
+    const name = cart[index].name;
+    cart.splice(index, 1);
+    saveCart(cart);
+    showToast('Removed: ' + name);
+  }
+
+  async function placeOrder() {
+    const user    = getUser();
+    const cart    = getCart();
+    const address = document.getElementById('deliveryAddress').value.trim();
+    const payment = document.getElementById('paymentMode').value;
+    const msgDiv  = document.getElementById('orderMessage');
+    const btn     = document.getElementById('confirmOrderBtn');
+    const btnText = document.getElementById('orderBtnText');
+    const spinner = document.getElementById('orderSpinner');
+
+    if (!address) {
+      msgDiv.className = 'alert alert-danger';
+      msgDiv.textContent = 'Please enter delivery address.';
+      msgDiv.classList.remove('d-none');
+      return;
+    }
+
+    const subtotal = cart.reduce((s,i) => s + i.price * i.qty, 0);
+    const total    = subtotal + 50;
+
+    btn.disabled = true;
+    btnText.classList.add('d-none');
+    spinner.classList.remove('d-none');
+    msgDiv.classList.add('d-none');
+
+    const payload = {
+      userId:      user.id,
+      address:     address,
+      paymentMode: payment,
+      totalAmount: total,
+      items: cart.map(item => ({
+        productId: item.id,
+        quantity:  item.qty,
+        price:     item.price
+      }))
+    };
+
+    try {
+      const res  = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (res.ok && data.id) {
+        localStorage.removeItem('fs_cart');
+        localStorage.setItem('last_order_id', data.id);
+        updateCartBadge();
+
+        msgDiv.className = 'alert alert-success';
+        msgDiv.textContent = 'Order placed! Order ID: #' + data.id;
+        msgDiv.classList.remove('d-none');
+        showToast('Order #' + data.id + ' placed successfully!');
+
+        setTimeout(() => {
+          bootstrap.Modal.getInstance(document.getElementById('checkoutModal')).hide();
+          window.location.href = 'order-tracking.html?orderId=' + data.id;
+        }, 2000);
+      } else {
+        msgDiv.className = 'alert alert-danger';
+        msgDiv.textContent = (data.error || 'Failed to place order.');
+        msgDiv.classList.remove('d-none');
+        btn.disabled = false;
+        btnText.classList.remove('d-none');
+        spinner.classList.add('d-none');
+      }
+    } catch(err) {
+      msgDiv.className = 'alert alert-danger';
+      msgDiv.textContent = 'Connection error. Is the backend running?';
+      msgDiv.classList.remove('d-none');
+      btn.disabled = false;
+      btnText.classList.remove('d-none');
+      spinner.classList.add('d-none');
+    }
+  }
+
+  updateCartBadge();
+  updateNav();
+  renderCart();
+</script>
+</body>
+</html>

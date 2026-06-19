@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FashionStore — Clothing & Fashion</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html">FashionStore<small>Clothing & Fashion</small></a>
+    <div class="nav-links">
+      <a href="products.html">Products</a>
+      <a href="order-tracking.html">Track Order</a>
+      <a href="login.html" id="nav-login-link">Login</a>
+      <a href="#" onclick="logout()" id="nav-logout-btn" style="display:none;color:#c94040!important;">Logout</a>
+      <a href="cart.html" class="nav-cart">🛒 Cart <span id="cart-count">0</span></a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container-fluid" style="padding:0 4rem;">
+    <div class="hero-inner">
+      <div class="hero-tag">New Collection 2024</div>
+      <h1>Dress Your <em>Best</em><br>Every Day</h1>
+      <p>Explore premium clothing for Men, Women & Kids. Curated styles that define you.</p>
+      <div class="hero-btns">
+        <button class="btn-gold" onclick="location.href='products.html'">Shop Now →</button>
+        <button class="btn-dark-outline" onclick="location.href='products.html?cat=2'">Women's Collection</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container-fluid" style="padding:0 3rem;">
+    <div class="eyebrow">Explore</div>
+    <h2 class="section-heading">Shop by Category</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;">
+      <div onclick="location.href='products.html?cat=1'" style="background:#fff;border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid #e5e5e5;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="height:160px;background:#f3f3f3;display:flex;align-items:center;justify-content:center;font-size:3.5rem;">👔</div>
+        <div style="padding:1.2rem;display:flex;justify-content:space-between;align-items:center;">
+          <div><strong style="font-family:serif;font-size:1.1rem;">Men</strong><br><span style="font-size:0.78rem;color:#aaa;">Shirts, Pants & More</span></div>
+          <span style="color:#c8a96e;">→</span>
+        </div>
+      </div>
+      <div onclick="location.href='products.html?cat=2'" style="background:#fff;border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid #e5e5e5;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="height:160px;background:#fdf5f0;display:flex;align-items:center;justify-content:center;font-size:3.5rem;">👗</div>
+        <div style="padding:1.2rem;display:flex;justify-content:space-between;align-items:center;">
+          <div><strong style="font-family:serif;font-size:1.1rem;">Women</strong><br><span style="font-size:0.78rem;color:#aaa;">Dresses, Tops & More</span></div>
+          <span style="color:#c8a96e;">→</span>
+        </div>
+      </div>
+      <div onclick="location.href='products.html?cat=3'" style="background:#fff;border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid #e5e5e5;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="height:160px;background:#f0f8f3;display:flex;align-items:center;justify-content:center;font-size:3.5rem;">🧒</div>
+        <div style="padding:1.2rem;display:flex;justify-content:space-between;align-items:center;">
+          <div><strong style="font-family:serif;font-size:1.1rem;">Kids</strong><br><span style="font-size:0.78rem;color:#aaa;">Cute & Comfortable</span></div>
+          <span style="color:#c8a96e;">→</span>
+        </div>
+      </div>
+      <div onclick="location.href='products.html?cat=4'" style="background:#fff;border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid #e5e5e5;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="height:160px;background:#f5f0fb;display:flex;align-items:center;justify-content:center;font-size:3.5rem;">👜</div>
+        <div style="padding:1.2rem;display:flex;justify-content:space-between;align-items:center;">
+          <div><strong style="font-family:serif;font-size:1.1rem;">Accessories</strong><br><span style="font-size:0.78rem;color:#aaa;">Bags, Belts & More</span></div>
+          <span style="color:#c8a96e;">→</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-bg">
+  <div class="container-fluid" style="padding:0 3rem;">
+    <div class="eyebrow">Trending Now</div>
+    <h2 class="section-heading">Featured Products</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;" id="featured-grid">
+      <p style="color:#aaa;grid-column:1/-1;text-align:center;padding:2rem;">Loading products...</p>
+    </div>
+    <div style="text-align:center;margin-top:3rem;">
+      <button class="btn-black" onclick="location.href='products.html'">View All Products →</button>
+    </div>
+  </div>
+</section>
+
+<section style="background:#0c0c0c;padding:5rem 0;text-align:center;position:relative;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(200,169,110,0.1) 0%,transparent 65%);"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="eyebrow" style="justify-content:center;display:flex;">Limited Time</div>
+    <h2 style="color:#fff;margin-bottom:1rem;">Flat 30% Off on New Arrivals</h2>
+    <p style="color:#aaa;margin-bottom:2rem;">Use code <strong style="color:#c8a96e;font-size:1.1rem;">FASHION30</strong> at checkout</p>
+    <button class="btn-gold" onclick="location.href='products.html'">Shop the Sale</button>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container-fluid" style="padding:0 3rem;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;padding-bottom:2.5rem;">
+      <div><div class="footer-brand-name">FashionStore</div><div class="footer-tagline">Premium Clothing & Fashion for everyone.</div></div>
+      <div><div class="footer-heading">Shop</div><div class="footer-links-col"><a href="products.html?cat=1">Men</a><a href="products.html?cat=2">Women</a><a href="products.html?cat=3">Kids</a><a href="products.html?cat=4">Accessories</a></div></div>
+      <div><div class="footer-heading">Account</div><div class="footer-links-col"><a href="login.html">Login</a><a href="register.html">Register</a><a href="order-tracking.html">Track Order</a><a href="cart.html">My Cart</a></div></div>
+      <div><div class="footer-heading">Support</div><div class="footer-links-col"><a href="#">About Us</a><a href="#">Contact</a><a href="#">Returns</a><a href="#">FAQ</a></div></div>
+    </div>
+  </div>
+  <div class="footer-bar">© 2024 FashionStore. All Rights Reserved.</div>
+</footer>
+
+<div id="toast-wrap"></div>
+<script src="js/main.js"></script>
+<script>
+fetch(BASE + '/products')
+  .then(r => r.json())
+  .then(products => {
+    const grid = document.getElementById('featured-grid');
+    if (!products.length) { grid.innerHTML = '<p style="color:#aaa;grid-column:1/-1;text-align:center;">No products found.</p>'; return; }
+    grid.innerHTML = products.slice(0,8).map(p => `
+      <div class="product-card">
+        <div class="product-img">
+          <img src="${p.imageUrl||'https://via.placeholder.com/300x260?text=Fashion'}" alt="${p.name}">
+          <div class="product-overlay">
+            <button class="product-overlay-btn" onclick="addToCart(${p.id},'${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||''}','${p.category?.name||''}')">Quick Add</button>
+          </div>
+          ${p.stock<5?'<span class="product-badge badge-sale">Low Stock</span>':'<span class="product-badge badge-new">New</span>'}
+        </div>
+        <div class="product-body">
+          <div class="product-cat">${p.category?.name||'Fashion'}</div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-foot">
+            <div class="product-price">₹${p.price.toLocaleString()}</div>
+            <button class="btn-add-cart" onclick="addToCart(${p.id},'${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||''}','${p.category?.name||''}')">+</button>
+          </div>
+        </div>
+      </div>`).join('');
+  })
+  .catch(() => { document.getElementById('featured-grid').innerHTML = '<p style="color:#aaa;grid-column:1/-1;text-align:center;padding:2rem;">Could not load products. Check backend.</p>'; });
+</script>
+</body>
+</html>

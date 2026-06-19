@@ -1,0 +1,35 @@
+# ===== Java / Maven / Spring Boot =====
+target/
+*.class
+*.jar
+*.war
+.mvn/
+mvnw
+mvnw.cmd
+
+# ===== IntelliJ IDEA =====
+.idea/
+*.iml
+*.iws
+out/
+
+# ===== Sensitive Config (IMPORTANT!) =====
+backend/backend/src/main/resources/application.properties
+backend/backend/src/main/resources/application-local.properties
+**/application-secrets.properties
+
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+
+# ===== Uploads folder (user uploaded images) =====
+backend/backend/uploads/
+
+# ===== Node (if any frontend build tools used) =====
+node_modules/
+
+# ===== VS Code =====
+.vscode/

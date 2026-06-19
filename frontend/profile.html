@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Profile - SwiftCart</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f7faf8; font-family:Arial,Helvetica,sans-serif; color:#16211f; }
+    .navbar { background:white; box-shadow:0 8px 25px rgba(0,0,0,0.06); }
+    .navbar-brand { font-weight:900; }
+    .profile-box { background:white; border-radius:14px; padding:30px; box-shadow:0 14px 40px rgba(0,0,0,0.08); }
+    .avatar { width:90px; height:90px; border-radius:50%; background:#16211f; color:white; display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:900; }
+    .form-control { border-radius:8px; }
+    .badge-status { padding:6px 12px; border-radius:999px; font-size:12px; font-weight:800; }
+    .PENDING   { background:#fef3c7; color:#92400e; }
+    .SHIPPED   { background:#dbeafe; color:#1d4ed8; }
+    .DELIVERED { background:#dcfce7; color:#166534; }
+    .CANCELLED { background:#fee2e2; color:#b91c1c; }
+    .order-row { background:#f8fafc; border:1px solid #dbe4e1; border-radius:10px; padding:16px; margin-bottom:12px; }
+    .nav-tabs .nav-link.active { font-weight:800; border-bottom:3px solid #16211f; }
+    footer { margin-top:50px; background:#16211f; color:white; padding:25px 0; }
+    #toast-wrap { position:fixed; bottom:24px; right:24px; z-index:9999; }
+    .toast-msg { background:#16211f; color:white; padding:12px 20px; border-radius:8px; font-weight:700; font-size:14px; box-shadow:0 8px 25px rgba(0,0,0,0.2); margin-top:10px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="index.html"><i class="bi bi-bag-check-fill me-2"></i>SwiftCart</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="products.html">Products</a></li>
+        <li class="nav-item"><a class="nav-link" href="cart.html"><i class="bi bi-cart3"></i> Cart <span class="badge bg-dark ms-1" id="cart-count">0</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="order-tracking.html">Track Order</a></li>
+        <li class="nav-item" id="navAuthItem"><a class="nav-link" href="login.html">Login</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-5">
+
+  <div id="notLoggedIn" class="text-center py-5 d-none">
+    <i class="bi bi-person-x" style="font-size:64px;color:#dbe4e1;"></i>
+    <h3 class="fw-bold mt-3">Please login to view your profile</h3>
+    <a href="login.html" class="btn btn-dark mt-3">Go to Login</a>
+  </div>
+
+  <div id="profileContent" class="d-none">
+    <div class="row g-4">
+
+      <!-- Profile Card -->
+      <div class="col-lg-4">
+        <div class="profile-box text-center">
+          <div class="avatar mx-auto mb-3" id="avatarLetter">U</div>
+          <h4 class="fw-bold mb-0" id="displayName">—</h4>
+          <p class="text-secondary" id="displayEmail">—</p>
+          <button class="btn btn-outline-dark w-100 mt-2" data-bs-toggle="modal" data-bs-target="#editModal">
+            <i class="bi bi-pencil me-2"></i>Edit Profile
+          </button>
+          <button class="btn btn-outline-danger w-100 mt-2" onclick="logout()">
+            <i class="bi bi-box-arrow-right me-2"></i>Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Details + Orders -->
+      <div class="col-lg-8">
+        <div class="profile-box mb-4">
+          <h5 class="fw-bold mb-3">Account Details</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <small class="text-secondary fw-bold">Full Name</small>
+              <p class="mb-0" id="infoName">—</p>
+            </div>
+            <div class="col-md-6">
+              <small class="text-secondary fw-bold">Email</small>
+              <p class="mb-0" id="infoEmail">—</p>
+            </div>
+            <div class="col-md-6">
+              <small class="text-secondary fw-bold">Phone</small>
+              <p class="mb-0" id="infoPhone">—</p>
+            </div>
+            <div class="col-md-6">
+              <small class="text-secondary fw-bold">Address</small>
+              <p class="mb-0" id="infoAddress">—</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-box">
+          <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>My Order History</h5>
+          <div id="ordersList">
+            <p class="text-secondary">Loading orders...</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Edit Profile</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Full Name</label>
+          <input type="text" id="editName" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Email</label>
+          <input type="email" id="editEmail" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Phone</label>
+          <input type="tel" id="editPhone" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Address</label>
+          <textarea id="editAddress" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">New Password <span class="text-secondary small">(leave blank to keep current)</span></label>
+          <input type="password" id="editPassword" class="form-control" placeholder="••••••••">
+        </div>
+        <div id="editMessage" class="d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-dark px-4" onclick="saveProfile()">
+          <span id="saveBtnText">Save Changes</span>
+          <span id="saveSpinner" class="spinner-border spinner-border-sm d-none"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer><div class="container text-center"><p class="mb-0">2026 SwiftCart.</p></div></footer>
+<div id="toast-wrap"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const API_URL = 'http://localhost:8080/api';
+
+  function getCart() { return JSON.parse(localStorage.getItem('fs_cart') || '[]'); }
+  function getUser() { return JSON.parse(localStorage.getItem('fs_user') || 'null'); }
+  function setUser(u) { localStorage.setItem('fs_user', JSON.stringify(u)); }
+
+  function updateCartBadge() {
+    const total = getCart().reduce((s,i) => s + i.qty, 0);
+    document.querySelectorAll('#cart-count').forEach(el => el.textContent = total);
+  }
+
+  function updateNav() {
+    const user = getUser();
+    const navItem = document.getElementById('navAuthItem');
+    if (user) {
+      navItem.innerHTML = `<a class="nav-link fw-bold" href="profile.html"><i class="bi bi-person-circle me-1"></i>${user.name}</a>`;
+    }
+  }
+
+  function logout() { localStorage.removeItem('fs_user'); window.location.href = 'login.html'; }
+
+  function showToast(msg) {
+    const wrap = document.getElementById('toast-wrap');
+    const t = document.createElement('div');
+    t.className = 'toast-msg'; t.textContent = msg;
+    wrap.appendChild(t); setTimeout(() => t.remove(), 3000);
+  }
+
+  function loadProfile() {
+    const user = getUser();
+    if (!user) {
+      document.getElementById('notLoggedIn').classList.remove('d-none');
+      return;
+    }
+
+    document.getElementById('profileContent').classList.remove('d-none');
+    document.getElementById('avatarLetter').textContent = user.name?.charAt(0).toUpperCase() || 'U';
+    document.getElementById('displayName').textContent = user.name;
+    document.getElementById('displayEmail').textContent = user.email;
+    document.getElementById('infoName').textContent = user.name;
+    document.getElementById('infoEmail').textContent = user.email;
+    document.getElementById('infoPhone').textContent = user.phone || '—';
+    document.getElementById('infoAddress').textContent = user.address || '—';
+
+    // Fill edit form
+    document.getElementById('editName').value = user.name || '';
+    document.getElementById('editEmail').value = user.email || '';
+    document.getElementById('editPhone').value = user.phone || '';
+    document.getElementById('editAddress').value = user.address || '';
+
+    loadOrders(user.id);
+  }
+
+  async function loadOrders(userId) {
+    const div = document.getElementById('ordersList');
+    try {
+      const res = await fetch(`${API_URL}/orders/user/${userId}`);
+      const orders = await res.json();
+
+      if (!orders.length) {
+        div.innerHTML = `
+          <div class="text-center py-4">
+            <i class="bi bi-bag-x" style="font-size:42px;color:#dbe4e1;"></i>
+            <p class="text-secondary mt-2">No orders yet. <a href="products.html">Start shopping!</a></p>
+          </div>`;
+        return;
+      }
+
+      // Sort newest first
+      orders.sort((a, b) => b.id - a.id);
+
+      div.innerHTML = orders.map(o => `
+        <div class="order-row">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+              <b>Order #${o.id}</b>
+              <span class="badge-status ${o.status} ms-2">${o.status}</span>
+              <p class="small text-secondary mb-0 mt-1">${o.paymentMode || 'COD'} &middot; ${(o.items||[]).length} item(s)</p>
+            </div>
+            <div class="text-end">
+              <b>&#8377;${o.totalAmount}</b><br>
+              <button class="btn btn-sm btn-outline-dark mt-1" onclick="window.location.href='order-tracking.html?orderId=${o.id}'">
+                Track Order
+              </button>
+            </div>
+          </div>
+          ${o.items && o.items.length ? `
+            <div class="mt-2 small text-secondary">
+              ${o.items.map(i => `${i.product?.name || 'Product'} &times; ${i.quantity}`).join(', ')}
+            </div>` : ''}
+        </div>`).join('');
+
+    } catch(e) {
+      div.innerHTML = '<p class="text-danger">Could not load orders. Is the backend running?</p>';
+    }
+  }
+
+  async function saveProfile() {
+    const user = getUser();
+    const btn = document.getElementById('saveBtnText');
+    const spinner = document.getElementById('saveSpinner');
+    const msgDiv = document.getElementById('editMessage');
+
+    const updated = {
+      name:    document.getElementById('editName').value.trim(),
+      email:   document.getElementById('editEmail').value.trim(),
+      phone:   document.getElementById('editPhone').value.trim(),
+      address: document.getElementById('editAddress').value.trim()
+    };
+
+    const newPassword = document.getElementById('editPassword').value.trim();
+    if (newPassword) updated.password = newPassword;
+    else updated.password = user.password || undefined;
+
+    if (!updated.name || !updated.email) {
+      msgDiv.className = 'alert alert-danger';
+      msgDiv.textContent = 'Name and Email are required.';
+      msgDiv.classList.remove('d-none');
+      return;
+    }
+
+    btn.classList.add('d-none');
+    spinner.classList.remove('d-none');
+    msgDiv.classList.add('d-none');
+
+    try {
+      const res = await fetch(`${API_URL}/users/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.id) {
+        setUser(data);
+        showToast('✓ Profile updated successfully!');
+        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+        loadProfile();
+      } else {
+        msgDiv.className = 'alert alert-danger';
+        msgDiv.textContent = data.error || 'Update failed.';
+        msgDiv.classList.remove('d-none');
+      }
+    } catch(e) {
+      msgDiv.className = 'alert alert-danger';
+      msgDiv.textContent = 'Connection error. Is the backend running?';
+      msgDiv.classList.remove('d-none');
+    }
+
+    btn.classList.remove('d-none');
+    spinner.classList.add('d-none');
+  }
+
+  updateCartBadge();
+  updateNav();
+  loadProfile();
+</script>
+</body>
+</html>
